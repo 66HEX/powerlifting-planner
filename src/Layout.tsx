@@ -9,9 +9,9 @@ interface LayoutProps {
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   return (
     <SidebarProvider>
-      <div className="min-h-screen bg-black">
+      <div className="w-screen">
         <AppSidebar />
-        <main className="pl-64">
+        <main className="h-full w-full">
           <SidebarTrigger />
           {children}
         </main>

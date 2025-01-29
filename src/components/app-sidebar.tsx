@@ -41,13 +41,8 @@ const data = {
   },
   mainNavigation: [
     {
-      title: 'Home',
-      url: '/',
-      icon: Home
-    },
-    {
       title: 'Dashboard',
-      url: '/dashboard',
+      url: '/',
       icon: LayoutDashboard
     }
   ],
@@ -84,7 +79,7 @@ const data = {
 
 export function AppSidebar() {
   return (
-    <Sidebar variant="floating">
+    <Sidebar >
       <SidebarContent>
         <SidebarHeader>
           <SidebarMenu>

@@ -1,6 +1,5 @@
 import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Home from '@/views/Home/home';
 import Dashboard from '@/views/Dashboard/dashboard';
 import Clients from '@/views/Clients/clients';
 import Plans from '@/views/Plans/plans';
@@ -15,20 +14,21 @@ function App() {
   }, []);
 
   return (
-    <div className="flex flex-col">
-      <Router>
-        <Layout>
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/clients" element={<Clients />} />
-            <Route path="/plans" element={<Plans />} />
-            <Route path="/tracking" element={<Tracking />} />
-            <Route path="/schedule" element={<Schedule />} />
-            <Route path="/docs" element={<Documentation />} />
-          </Routes>
-        </Layout>
-      </Router>
+    <div className="pl-content bg-black">
+      <div className="w-full h-full relative">
+        <Router>
+          <Layout>
+            <Routes>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/clients" element={<Clients />} />
+              <Route path="/plans" element={<Plans />} />
+              <Route path="/tracking" element={<Tracking />} />
+              <Route path="/schedule" element={<Schedule />} />
+              <Route path="/docs" element={<Documentation />} />
+            </Routes>
+          </Layout>
+        </Router>
+      </div>
     </div>
   );
 }
