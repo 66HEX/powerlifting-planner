@@ -1,5 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 import withMT from '@material-tailwind/react/utils/withMT';
+import colors from 'tailwindcss/colors';
 
 export default withMT({
   content: ['./src/index.html', './src/**/*.{js,ts,jsx,tsx}'],
@@ -10,7 +11,8 @@ export default withMT({
         'slate-800': 'rgb(30 41 59)',
         black: 'rgb(0,0,0)',
         'text-primary': '#ffffff',
-        'text-secondary': 'rgba(255,255,255,0.7)',
+        'text-secondary': 'rgba(255,255,255,0.6)',
+        ...colors,
         card: {
           DEFAULT: 'hsl(var(--card))',
           foreground: 'hsl(var(--card-foreground))'

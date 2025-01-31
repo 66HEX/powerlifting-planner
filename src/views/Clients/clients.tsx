@@ -3,7 +3,8 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
-import { Pencil, Trash, Plus } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Pencil, Trash, Plus, Users } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -12,9 +13,9 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ColumnDef, flexRender, getCoreRowModel, getFilteredRowModel, useReactTable } from '@tanstack/react-table';
-import { useForm } from "react-hook-form";
+import { useForm } from 'react-hook-form';
 
-// Define the type for a client
+// Types remain the same...
 type Client = {
   id: number;
   name: string;
@@ -23,7 +24,6 @@ type Client = {
   goal: string;
 };
 
-// Define the type for the form data
 type FormData = {
   name: string;
   email: string;
@@ -31,14 +31,13 @@ type FormData = {
   goal: string;
 };
 
-// Sample data
 const initialClients: Client[] = [
   { id: 1, name: 'Anna Smith', email: 'anna.smith@example.com', phone: '123-456-7890', goal: 'Weight Loss' },
   { id: 2, name: 'John Miller', email: 'john.miller@example.com', phone: '987-654-3210', goal: 'Muscle Gain' },
   { id: 3, name: 'Mary Johnson', email: 'mary.johnson@example.com', phone: '555-555-5555', goal: 'Conditioning' }
 ];
 
-const Clients: React.FC = () => {
+const Clients = () => {
   const [clients, setClients] = useState<Client[]>(initialClients);
   const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
@@ -78,10 +77,20 @@ const Clients: React.FC = () => {
         const client = row.original;
         return (
           <div className="flex gap-2">
-            <Button variant="ghost" size="sm" onClick={() => handleEdit(client)}>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => handleEdit(client)}
+              className="text-gray-400 hover:text-gray-300"
+            >
               <Pencil className="h-4 w-4" />
             </Button>
-            <Button variant="ghost" size="sm" onClick={() => handleDelete(client.id)}>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => handleDelete(client.id)}
+              className="text-gray-400 hover:text-gray-300"
+            >
               <Trash className="h-4 w-4" />
             </Button>
           </div>
@@ -135,82 +144,109 @@ const Clients: React.FC = () => {
   };
 
   return (
-    <div className="p-4 absolute inset-0 overflow-auto bg-background">
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl font-bold">Clients</h1>
-        <div className="flex items-center gap-4">
-          <Input
-            placeholder="Filter by name..."
-            value={nameFilter}
-            onChange={(e) => setNameFilter(e.target.value)}
-            className="max-w-sm"
-          />
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline">Columns</Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {table
-                .getAllColumns()
-                .filter((column) => column.getCanHide())
-                .map((column) => {
-                  return (
-                    <DropdownMenuCheckboxItem
-                      key={column.id}
-                      className="capitalize"
-                      checked={column.getIsVisible()}
-                      onCheckedChange={(value) => column.toggleVisibility(!!value)}
-                    >
-                      {column.id}
-                    </DropdownMenuCheckboxItem>
-                  );
-                })}
-            </DropdownMenuContent>
-          </DropdownMenu>
-          <Button onClick={handleAdd}>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Client
-          </Button>
-        </div>
-      </div>
+    <div className="absolute inset-0 px-4 pt-4 pb-12 overflow-auto bg-black">
+      <div className="space-y-4">
+        {/* Header Stats Card */}
+        <Card className="bg-gradient-to-tr from-transparent to-gray-300/5 border border-white/10">
+          <CardContent className="flex items-center justify-between p-6">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-emerald-500/10 rounded-full">
+                <Users className="h-8 w-8 text-emerald-400" />
+              </div>
+              <div>
+                <h3 className="text-2xl font-bold text-white">{clients.length}</h3>
+                <p className="text-sm font-medium text-gray-400">Total Clients</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-4">
+              <Input
+                placeholder="Filter by name..."
+                value={nameFilter}
+                onChange={(e) => setNameFilter(e.target.value)}
+                className="max-w-sm border border-white/10 "
+              />
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="bg-transparent border border-white/10 text-gray-300 hover:bg-gray-300/5">
+                    Columns
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="border-white/10">
+                  {table
+                    .getAllColumns()
+                    .filter((column) => column.getCanHide())
+                    .map((column) => {
+                      return (
+                        <DropdownMenuCheckboxItem
+                          key={column.id}
+                          className="capitalize text-gray-300"
+                          checked={column.getIsVisible()}
+                          onCheckedChange={(value) => column.toggleVisibility(!!value)}
+                        >
+                          {column.id}
+                        </DropdownMenuCheckboxItem>
+                      );
+                    })}
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <Button
+                onClick={handleAdd}
+                className="bg-emerald-400/30 backdrop-blur-md border border-white/10 hover:bg-emerald-400/40 text-gray-300"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add Client
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
 
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id}>
-                    {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
-                  </TableHead>
+        {/* Clients Table Card */}
+        <Card className="bg-gradient-to-tr from-transparent to-gray-300/5 border border-white/10">
+          <CardHeader className="pb-8">
+            <CardTitle className="text-lg font-medium text-gray-300">Client List</CardTitle>
+            <p className="text-sm text-gray-400">Manage and view all your clients in one place.</p>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                {table.getHeaderGroups().map((headerGroup) => (
+                  <TableRow key={headerGroup.id} className="border-b border-white/10 hover:bg-gray-300/5">
+                    {headerGroup.headers.map((header) => (
+                      <TableHead key={header.id} className="text-gray-400">
+                        {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+                      </TableHead>
+                    ))}
+                  </TableRow>
                 ))}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id}>
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center">
-                  No results.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+              </TableHeader>
+              <TableBody>
+                {table.getRowModel().rows?.length ? (
+                  table.getRowModel().rows.map((row) => (
+                    <TableRow key={row.id} className="border-b border-white/5 hover:bg-gray-300/5">
+                      {row.getVisibleCells().map((cell) => (
+                        <TableCell key={cell.id} className="text-gray-300">
+                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={columns.length} className="h-24 text-center text-gray-400">
+                      No results.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
       </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent>
+        <DialogContent className="bg-gradient-to-tr from-transparent to-gray-300/5 border border-white/10">
           <DialogHeader>
-            <DialogTitle>{isEditing ? 'Edit Client' : 'Add New Client'}</DialogTitle>
+            <DialogTitle className="text-gray-300">{isEditing ? 'Edit Client' : 'Add New Client'}</DialogTitle>
           </DialogHeader>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -219,9 +255,9 @@ const Clients: React.FC = () => {
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Name</FormLabel>
+                    <FormLabel className="text-gray-400">Name</FormLabel>
                     <FormControl>
-                      <Input {...field} />
+                      <Input {...field} className="border-white/10" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -232,9 +268,9 @@ const Clients: React.FC = () => {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email</FormLabel>
+                    <FormLabel className="text-gray-400">Email</FormLabel>
                     <FormControl>
-                      <Input {...field} />
+                      <Input {...field} className="border-white/10" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -245,9 +281,9 @@ const Clients: React.FC = () => {
                 name="phone"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Phone</FormLabel>
+                    <FormLabel className="text-gray-400">Phone</FormLabel>
                     <FormControl>
-                      <Input {...field} />
+                      <Input {...field} className="border-white/10" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -258,16 +294,21 @@ const Clients: React.FC = () => {
                 name="goal"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Goal</FormLabel>
+                    <FormLabel className="text-gray-400">Goal</FormLabel>
                     <FormControl>
-                      <Input {...field} />
+                      <Input {...field} className="border-white/10" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
               <DialogFooter>
-                <Button type="submit">{isEditing ? 'Save Changes' : 'Add Client'}</Button>
+                <Button
+                  type="submit"
+                  className="bg-emerald-400/30 backdrop-blur-md border border-white/10 hover:bg-emerald-400/40 text-gray-300"
+                >
+                  {isEditing ? 'Save Changes' : 'Add Client'}
+                </Button>
               </DialogFooter>
             </form>
           </Form>

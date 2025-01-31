@@ -11,7 +11,7 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
-import { Plus, Pencil, Trash } from 'lucide-react';
+import { Plus, Pencil, Trash, CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import {
   ColumnDef,
@@ -21,6 +21,7 @@ import {
   useReactTable,
   SortingState
 } from '@tanstack/react-table';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 // Define the type for an event
 type Event = {
@@ -101,7 +102,7 @@ const Schedule: React.FC = () => {
     const patternParts = cleanPattern.split('/');
     const dateParts = eventDateStr.split('/');
 
-    for (let i = 0; i < patternParts.length; i + 1) {
+    for (let i = 0; i < patternParts.length; i++) {
       if (patternParts[i] && patternParts[i] !== dateParts[i]) {
         return false;
       }
@@ -220,84 +221,115 @@ const Schedule: React.FC = () => {
   };
 
   return (
-    <div className="p-4 absolute inset-0 overflow-auto bg-background">
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl font-bold">Schedule</h1>
-        <div className="flex items-center gap-4">
-          <Input
-            placeholder="Filter by date..."
-            value={filterDateInput}
-            onChange={(e) => setFilterDateInput(e.target.value)}
-            className="max-w-sm"
-          />
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline">Columns</Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {table
-                .getAllColumns()
-                .filter((column) => column.getCanHide())
-                .map((column) => (
-                  <DropdownMenuCheckboxItem
-                    key={column.id}
-                    checked={column.getIsVisible()}
-                    onCheckedChange={(value) => column.toggleVisibility(!!value)}
+    <div className="absolute inset-0 px-4 pt-4 pb-12 overflow-auto bg-black">
+      <div className="space-y-4">
+        {/* Header Stats Card */}
+        <Card className="bg-gradient-to-tr from-transparent to-gray-300/5 border border-white/10">
+          <CardContent className="flex items-center justify-between p-6">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-emerald-500/10 rounded-full">
+                <CalendarIcon className="h-8 w-8 text-emerald-400" />
+              </div>
+              <div>
+                <h3 className="text-2xl font-bold text-white">{events.length}</h3>
+                <p className="text-sm font-medium text-gray-400">Total Events</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-4">
+              <Input
+                placeholder="Filter by date..."
+                value={filterDateInput}
+                onChange={(e) => setFilterDateInput(e.target.value)}
+                className="max-w-sm border border-white/10"
+              />
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="bg-transparent border border-white/10 text-gray-300 hover:bg-gray-300/5"
                   >
-                    {columnDisplayNames[column.id] || column.id}
-                  </DropdownMenuCheckboxItem>
-                ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-          <Button onClick={handleAddEvent}>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Event
-          </Button>
-        </div>
-      </div>
+                    Columns
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="border-white/10">
+                  {table
+                    .getAllColumns()
+                    .filter((column) => column.getCanHide())
+                    .map((column) => (
+                      <DropdownMenuCheckboxItem
+                        key={column.id}
+                        className="capitalize text-gray-300"
+                        checked={column.getIsVisible()}
+                        onCheckedChange={(value) => column.toggleVisibility(!!value)}
+                      >
+                        {columnDisplayNames[column.id] || column.id}
+                      </DropdownMenuCheckboxItem>
+                    ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <Button
+                onClick={handleAddEvent}
+                className="bg-emerald-400/30 backdrop-blur-md border border-white/10 hover:bg-emerald-400/40 text-gray-300"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add Event
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
 
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id}>
-                    {flexRender(header.column.columnDef.header, header.getContext())}
-                  </TableHead>
+        {/* Events Table Card */}
+        <Card className="bg-gradient-to-tr from-transparent to-gray-300/5 border border-white/10">
+          <CardHeader className="pb-8">
+            <CardTitle className="text-lg font-medium text-gray-300">Events List</CardTitle>
+            <p className="text-sm text-gray-400">Manage and view all your scheduled events in one place.</p>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                {table.getHeaderGroups().map((headerGroup) => (
+                  <TableRow key={headerGroup.id} className="border-b border-white/10 hover:bg-gray-300/5">
+                    {headerGroup.headers.map((header) => (
+                      <TableHead key={header.id} className="text-gray-400">
+                        {flexRender(header.column.columnDef.header, header.getContext())}
+                      </TableHead>
+                    ))}
+                  </TableRow>
                 ))}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id}>
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center">
-                  No events found.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+              </TableHeader>
+              <TableBody>
+                {table.getRowModel().rows?.length ? (
+                  table.getRowModel().rows.map((row) => (
+                    <TableRow key={row.id} className="border-b border-white/5 hover:bg-gray-300/5">
+                      {row.getVisibleCells().map((cell) => (
+                        <TableCell key={cell.id} className="text-gray-300">
+                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={columns.length} className="h-24 text-center text-gray-400">
+                      No events found.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
       </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="w-full max-w-3xl">
+        <DialogContent className="w-full max-w-3xl bg-gradient-to-tr from-transparent to-gray-300/5 border border-white/10">
           <DialogHeader>
-            <DialogTitle>{selectedEvent ? 'Edit Event' : 'Add New Event'}</DialogTitle>
+            <DialogTitle className="text-gray-300">{selectedEvent ? 'Edit Event' : 'Add New Event'}</DialogTitle>
           </DialogHeader>
           <div className="grid grid-cols-2 gap-12">
             <div className="space-y-4">
               <div className="space-y-2">
-                <label htmlFor="title" className="text-sm font-medium">
+                <label htmlFor="title" className="text-sm font-medium text-gray-400">
                   Title
                 </label>
                 <Input
@@ -305,10 +337,11 @@ const Schedule: React.FC = () => {
                   value={newEvent.title}
                   onChange={(e) => setNewEvent({ ...newEvent, title: e.target.value })}
                   placeholder="Event title"
+                  className="border-white/10"
                 />
               </div>
               <div className="space-y-2">
-                <label htmlFor="time" className="text-sm font-medium">
+                <label htmlFor="time" className="text-sm font-medium text-gray-400">
                   Time
                 </label>
                 <Input
@@ -316,10 +349,11 @@ const Schedule: React.FC = () => {
                   type="time"
                   value={newEvent.time}
                   onChange={(e) => setNewEvent({ ...newEvent, time: e.target.value })}
+                  className="border-white/10"
                 />
               </div>
               <div className="space-y-2">
-                <label htmlFor="clientName" className="text-sm font-medium">
+                <label htmlFor="clientName" className="text-sm font-medium text-gray-400">
                   Client Name
                 </label>
                 <Input
@@ -327,17 +361,18 @@ const Schedule: React.FC = () => {
                   value={newEvent.clientName}
                   onChange={(e) => setNewEvent({ ...newEvent, clientName: e.target.value })}
                   placeholder="Client name"
+                  className="border-white/10"
                 />
               </div>
               <div className="space-y-2">
-                <label htmlFor="duration" className="text-sm font-medium">
+                <label htmlFor="duration" className="text-sm font-medium text-gray-400">
                   Duration (minutes)
                 </label>
                 <Select
                   value={newEvent.duration}
                   onValueChange={(value) => setNewEvent({ ...newEvent, duration: value })}
                 >
-                  <SelectTrigger id="duration">
+                  <SelectTrigger id="duration" className="border-white/10">
                     <SelectValue placeholder="Select duration" />
                   </SelectTrigger>
                   <SelectContent>
@@ -354,12 +389,17 @@ const Schedule: React.FC = () => {
                 mode="single"
                 selected={newEvent.date}
                 onSelect={handleDateSelect}
-                className="rounded-md border w-full"
+                className="rounded-md border border-white/10"
               />
             </div>
           </div>
           <DialogFooter>
-            <Button onClick={handleSaveEvent}>{selectedEvent ? 'Save Changes' : 'Add Event'}</Button>
+            <Button
+              onClick={handleSaveEvent}
+              className="bg-emerald-400/30 backdrop-blur-md border border-white/10 hover:bg-emerald-400/40 text-gray-300"
+            >
+              {selectedEvent ? 'Save Changes' : 'Add Event'}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

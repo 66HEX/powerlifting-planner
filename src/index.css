@@ -161,4 +161,5 @@
 body {
   overflow: hidden; /* Hide scrollbars */
   font-family: Lausanne, sans-serif;
+  background-color: #13ae76;
 }
