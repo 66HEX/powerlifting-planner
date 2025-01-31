@@ -117,6 +117,10 @@ const Schedule: React.FC = () => {
 
   const columns: ColumnDef<Event>[] = [
     {
+      accessorKey: 'clientName',
+      header: 'Client Name'
+    },
+    {
       accessorKey: 'title',
       header: 'Title'
     },
@@ -128,10 +132,6 @@ const Schedule: React.FC = () => {
     {
       accessorKey: 'time',
       header: 'Time'
-    },
-    {
-      accessorKey: 'clientName',
-      header: 'Client'
     },
     {
       accessorKey: 'duration',
@@ -216,7 +216,7 @@ const Schedule: React.FC = () => {
     title: 'Title',
     date: 'Date',
     time: 'Time',
-    clientName: 'Client',
+    clientName: 'Client Name',
     duration: 'Duration (min)'
   };
 
@@ -269,7 +269,7 @@ const Schedule: React.FC = () => {
               </DropdownMenu>
               <Button
                 onClick={handleAddEvent}
-                className="bg-emerald-400/30 backdrop-blur-md border border-white/10 hover:bg-emerald-400/40 text-gray-300"
+                className="bg-emerald-400/40 backdrop-blur-md border border-white/10 hover:bg-emerald-400/50 text-gray-300"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Add Event
@@ -396,7 +396,7 @@ const Schedule: React.FC = () => {
           <DialogFooter>
             <Button
               onClick={handleSaveEvent}
-              className="bg-emerald-400/30 backdrop-blur-md border border-white/10 hover:bg-emerald-400/40 text-gray-300"
+              className="bg-emerald-400/40 backdrop-blur-md border border-white/10 hover:bg-emerald-400/50 text-gray-300"
             >
               {selectedEvent ? 'Save Changes' : 'Add Event'}
             </Button>

@@ -58,11 +58,6 @@ const data = {
       icon: ClipboardList
     },
     {
-      title: 'Tracking',
-      url: '/tracking',
-      icon: LineChart
-    },
-    {
       title: 'Schedule',
       url: '/schedule',
       icon: Calendar

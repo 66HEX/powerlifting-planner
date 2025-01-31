@@ -1,8 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Plus, Pencil, Trash, ClipboardList } from 'lucide-react';
@@ -21,82 +19,23 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
+import PlanDialog from '@/components/plan-dialog';
 
-// PlanDialog component with updated styling
-const PlanDialog: React.FC<{
-  isOpen: boolean;
-  onClose: () => void;
-  onSave: (plan: Plan) => void;
-  selectedPlan: Plan | null;
-}> = ({ isOpen, onClose, onSave, selectedPlan }) => {
-  const [name, setName] = useState<string>(selectedPlan?.name || '');
-  const [clientName, setClientName] = useState<string>(selectedPlan?.clientName || '');
-  const [durationWeeks, setDurationWeeks] = useState<string>(selectedPlan?.durationWeeks.toString() || '');
-  const [workoutsPerWeek, setWorkoutsPerWeek] = useState<string>(selectedPlan?.workoutsPerWeek.toString() || '');
+type Set = {
+  id: number;
+  weight: number;
+};
 
-  const handleSave = () => {
-    onSave({
-      id: selectedPlan?.id || 0,
-      name,
-      clientName,
-      durationWeeks: Number(durationWeeks),
-      workoutsPerWeek: Number(workoutsPerWeek),
-      createdAt: selectedPlan?.createdAt || new Date()
-    });
-    onClose();
-  };
+type Exercise = {
+  id: number;
+  name: string;
+  sets: Set[];
+  comment?: string;
+};
 
-  return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-gradient-to-tr from-transparent to-gray-300/5 border border-white/10">
-        <DialogHeader>
-          <DialogTitle className="text-gray-300">{selectedPlan ? 'Edit Plan' : 'Add New Plan'}</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4">
-          <div>
-            <Label className="text-gray-400">Client Name</Label>
-            <Input
-              value={clientName}
-              onChange={(e) => setClientName(e.target.value)}
-              className="border-white/10 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-            />
-          </div>
-          <div>
-            <Label className="text-gray-400">Plan Name</Label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} className="border-white/10" />
-          </div>
-          <div>
-            <Label className="text-gray-400">Duration (weeks)</Label>
-            <Input
-              type="number"
-              value={durationWeeks}
-              onChange={(e) => setDurationWeeks(Number(e.target.value))}
-              min="1"
-              className="border-white/10 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-            />
-          </div>
-          <div>
-            <Label className="text-gray-400">Workouts per Week</Label>
-            <Input
-              type="number"
-              value={workoutsPerWeek}
-              onChange={(e) => setWorkoutsPerWeek(Number(e.target.value))}
-              min="1"
-              className="border-white/10 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-            />
-          </div>
-        </div>
-        <DialogFooter>
-          <Button
-            onClick={handleSave}
-            className="bg-emerald-400/30 backdrop-blur-md border border-white/10 hover:bg-emerald-400/40 text-gray-300"
-          >
-            {selectedPlan ? 'Save Changes' : 'Add Plan'}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
+type Workout = {
+  id: number;
+  exercises: Exercise[];
 };
 
 type Plan = {
@@ -106,8 +45,10 @@ type Plan = {
   durationWeeks: number;
   workoutsPerWeek: number;
   createdAt: Date;
+  workouts: Workout[];
 };
 
+// Przykładowe dane z nową strukturą
 const initialPlans: Plan[] = [
   {
     id: 1,
@@ -115,15 +56,49 @@ const initialPlans: Plan[] = [
     clientName: 'John Doe',
     durationWeeks: 8,
     workoutsPerWeek: 4,
-    createdAt: new Date(2024, 0, 15)
+    createdAt: new Date(2024, 0, 15),
+    workouts: [
+      {
+        id: 1,
+        exercises: [
+          {
+            id: 1,
+            name: 'Bench Press',
+            sets: [
+              { id: 1, weight: 60 },
+              { id: 2, weight: 65 },
+              { id: 3, weight: 70 }
+            ],
+            comment: 'Focus on proper form'
+          }
+        ]
+      }
+    ]
   },
   {
     id: 2,
-    name: 'Strength Plan',
-    clientName: 'Jane Smith',
+    name: 'Gain Muscle Plan',
+    clientName: 'Jane Doe',
     durationWeeks: 12,
     workoutsPerWeek: 3,
-    createdAt: new Date(2024, 1, 1)
+    createdAt: new Date(2023, 1, 15),
+    workouts: [
+      {
+        id: 1,
+        exercises: [
+          {
+            id: 1,
+            name: 'Hip Thrust',
+            sets: [
+              { id: 1, weight: 60 },
+              { id: 2, weight: 65 },
+              { id: 3, weight: 70 }
+            ],
+            comment: 'Focus on proper form'
+          }
+        ]
+      }
+    ]
   }
 ];
 
@@ -220,7 +195,15 @@ const Plans: React.FC = () => {
     if (selectedPlan) {
       setPlans(plans.map((p) => (p.id === selectedPlan.id ? plan : p)));
     } else {
-      setPlans([...plans, { ...plan, id: plans.length + 1, createdAt: new Date() }]);
+      setPlans([
+        ...plans,
+        {
+          ...plan,
+          id: plans.length + 1,
+          createdAt: new Date(),
+          workouts: plan.workouts || []
+        }
+      ]);
     }
     setIsDialogOpen(false);
   };
@@ -282,7 +265,7 @@ const Plans: React.FC = () => {
               </DropdownMenu>
               <Button
                 onClick={handleAddPlan}
-                className="bg-emerald-400/30 backdrop-blur-md border border-white/10 hover:bg-emerald-400/40 text-gray-300"
+                className="bg-emerald-400/40 backdrop-blur-md border border-white/10 hover:bg-emerald-400/50 text-gray-300"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Add Plan
@@ -292,7 +275,7 @@ const Plans: React.FC = () => {
         </Card>
 
         {/* Plans Table Card */}
-        <Card className="bg-gradient-to-tr from-transparent to-[gray-300/5] border border-white/10">
+        <Card className="bg-gradient-to-tr from-transparent to-gray-300/5 border border-white/10">
           <CardHeader className="pb-8">
             <CardTitle className="text-lg font-medium text-gray-300">Training Plans</CardTitle>
             <p className="text-sm text-gray-400">Manage and view all your training plans in one place.</p>

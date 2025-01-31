@@ -57,7 +57,7 @@ const Clients = () => {
   const columns: ColumnDef<Client>[] = [
     {
       accessorKey: 'name',
-      header: 'Name'
+      header: 'Client Name'
     },
     {
       accessorKey: 'email',
@@ -167,7 +167,10 @@ const Clients = () => {
               />
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="bg-transparent border border-white/10 text-gray-300 hover:bg-gray-300/5">
+                  <Button
+                    variant="outline"
+                    className="bg-transparent border border-white/10 text-gray-300 hover:bg-gray-300/5"
+                  >
                     Columns
                   </Button>
                 </DropdownMenuTrigger>
@@ -191,7 +194,7 @@ const Clients = () => {
               </DropdownMenu>
               <Button
                 onClick={handleAdd}
-                className="bg-emerald-400/30 backdrop-blur-md border border-white/10 hover:bg-emerald-400/40 text-gray-300"
+                className="bg-emerald-400/40 backdrop-blur-md border border-white/10 hover:bg-emerald-400/50 text-gray-300"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Add Client
@@ -305,7 +308,7 @@ const Clients = () => {
               <DialogFooter>
                 <Button
                   type="submit"
-                  className="bg-emerald-400/30 backdrop-blur-md border border-white/10 hover:bg-emerald-400/40 text-gray-300"
+                  className="bg-emerald-400/40 backdrop-blur-md border border-white/10 hover:bg-emerald-400/50 text-gray-300"
                 >
                   {isEditing ? 'Save Changes' : 'Add Client'}
                 </Button>
