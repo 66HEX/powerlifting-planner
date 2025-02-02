@@ -9,7 +9,7 @@ interface LayoutProps {
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   return (
     <SidebarProvider>
-      <div className="w-screen">
+      <div className="w-screen bg-[#080808]">
         <AppSidebar />
         <main className="h-full w-full">
           <SidebarTrigger />

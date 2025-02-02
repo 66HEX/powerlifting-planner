@@ -13,7 +13,7 @@ function App() {
   }, []);
 
   return (
-    <div className="pl-content bg-black">
+    <div className="pl-content">
       <div className="w-full h-full relative">
         <Router>
           <Layout>

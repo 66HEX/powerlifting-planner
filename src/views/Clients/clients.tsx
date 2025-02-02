@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -15,7 +15,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { ColumnDef, flexRender, getCoreRowModel, getFilteredRowModel, useReactTable } from '@tanstack/react-table';
 import { useForm } from 'react-hook-form';
 
-// Types remain the same...
 type Client = {
   id: number;
   name: string;
@@ -37,6 +36,33 @@ const initialClients: Client[] = [
   { id: 3, name: 'Mary Johnson', email: 'mary.johnson@example.com', phone: '555-555-5555', goal: 'Conditioning' }
 ];
 
+const ActionsCell = ({
+  row,
+  onEdit,
+  onDelete
+}: {
+  row: any;
+  onEdit: (client: Client) => void;
+  onDelete: (id: number) => void;
+}) => {
+  const client = row.original;
+  return (
+    <div className="flex gap-2">
+      <Button variant="ghost" size="sm" onClick={() => onEdit(client)} className="text-gray-400 hover:text-gray-300">
+        <Pencil className="h-4 w-4" />
+      </Button>
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => onDelete(client.id)}
+        className="text-gray-400 hover:text-gray-300"
+      >
+        <Trash className="h-4 w-4" />
+      </Button>
+    </div>
+  );
+};
+
 const Clients = () => {
   const [clients, setClients] = useState<Client[]>(initialClients);
   const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
@@ -54,50 +80,48 @@ const Clients = () => {
     }
   });
 
-  const columns: ColumnDef<Client>[] = [
-    {
-      accessorKey: 'name',
-      header: 'Client Name'
+  const handleEdit = useCallback(
+    (client: Client) => {
+      setSelectedClient(client);
+      setIsEditing(true);
+      form.reset(client);
+      setIsDialogOpen(true);
     },
-    {
-      accessorKey: 'email',
-      header: 'Email'
-    },
-    {
-      accessorKey: 'phone',
-      header: 'Phone'
-    },
-    {
-      accessorKey: 'goal',
-      header: 'Goal'
-    },
-    {
-      id: 'actions',
-      cell: ({ row }) => {
-        const client = row.original;
-        return (
-          <div className="flex gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => handleEdit(client)}
-              className="text-gray-400 hover:text-gray-300"
-            >
-              <Pencil className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => handleDelete(client.id)}
-              className="text-gray-400 hover:text-gray-300"
-            >
-              <Trash className="h-4 w-4" />
-            </Button>
-          </div>
-        );
+    [form]
+  );
+
+  const handleDelete = useCallback((id: number) => {
+    setClients((prev) => prev.filter((client) => client.id !== id));
+  }, []);
+
+  const handleAdd = useCallback(() => {
+    setSelectedClient(null);
+    setIsEditing(false);
+    form.reset({ name: '', email: '', phone: '', goal: '' });
+    setIsDialogOpen(true);
+  }, [form]);
+
+  const columns = useMemo<ColumnDef<Client>[]>(
+    () => [
+      { accessorKey: 'name', header: 'Client Name' },
+      { accessorKey: 'email', header: 'Email' },
+      { accessorKey: 'phone', header: 'Phone' },
+      { accessorKey: 'goal', header: 'Goal' },
+      {
+        id: 'actions',
+        accessorKey: 'actions',
+        header: 'Actions',
+        cell: ({ row }) => (
+          <ActionsCell
+            row={row}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+          />
+        )
       }
-    }
-  ];
+    ],
+    [handleDelete, handleEdit]
+  );
 
   const table = useReactTable({
     data: clients,
@@ -111,47 +135,27 @@ const Clients = () => {
     getCoreRowModel: getCoreRowModel()
   });
 
-  const handleEdit = (client: Client) => {
-    setSelectedClient(client);
-    setIsEditing(true);
-    form.reset(client);
-    setIsDialogOpen(true);
-  };
-
-  const handleDelete = (id: number) => {
-    setClients(clients.filter((client) => client.id !== id));
-  };
-
-  const handleAdd = () => {
-    setSelectedClient(null);
-    setIsEditing(false);
-    form.reset({
-      name: '',
-      email: '',
-      phone: '',
-      goal: ''
-    });
-    setIsDialogOpen(true);
-  };
-
-  const onSubmit = (data: FormData) => {
-    if (isEditing && selectedClient) {
-      setClients(clients.map((client) => (client.id === selectedClient.id ? { ...client, ...data } : client)));
-    } else {
-      setClients([...clients, { id: clients.length + 1, ...data }]);
-    }
-    setIsDialogOpen(false);
-  };
+  const onSubmit = useCallback(
+    (data: FormData) => {
+      if (isEditing && selectedClient) {
+        setClients((prev) => prev.map((client) => (client.id === selectedClient.id ? { ...client, ...data } : client)));
+      } else {
+        setClients((prev) => [...prev, { id: prev.length + 1, ...data }]);
+      }
+      setIsDialogOpen(false);
+    },
+    [isEditing, selectedClient]
+  );
 
   return (
-    <div className="absolute inset-0 px-4 pt-4 pb-12 overflow-auto bg-black">
+    <div className="absolute inset-0 px-4 pt-4 pb-12 overflow-auto">
       <div className="space-y-4">
         {/* Header Stats Card */}
         <Card className="bg-gradient-to-tr from-transparent to-gray-300/5 border border-white/10">
           <CardContent className="flex items-center justify-between p-6">
             <div className="flex items-center gap-4">
               <div className="p-3 bg-emerald-500/10 rounded-full">
-                <Users className="h-8 w-8 text-emerald-400" />
+                <Users className="h-8 w-8 text-emerald-800" />
               </div>
               <div>
                 <h3 className="text-2xl font-bold text-white">{clients.length}</h3>
@@ -194,7 +198,7 @@ const Clients = () => {
               </DropdownMenu>
               <Button
                 onClick={handleAdd}
-                className="bg-emerald-400/40 backdrop-blur-md border border-white/10 hover:bg-emerald-400/50 text-gray-300"
+                className="bg-emerald-800/50 backdrop-blur-md border border-white/10 hover:bg-emerald-800/60 text-gray-300"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Add Client
@@ -308,7 +312,7 @@ const Clients = () => {
               <DialogFooter>
                 <Button
                   type="submit"
-                  className="bg-emerald-400/40 backdrop-blur-md border border-white/10 hover:bg-emerald-400/50 text-gray-300"
+                  className="bg-emerald-800/50 backdrop-blur-md border border-white/10 hover:bg-emerald-800/60 text-gray-300"
                 >
                   {isEditing ? 'Save Changes' : 'Add Client'}
                 </Button>

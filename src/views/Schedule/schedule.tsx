@@ -86,7 +86,6 @@ const Schedule: React.FC = () => {
   });
   const [filterDateInput, setFilterDateInput] = useState<string>('');
 
-  // Funkcja do usuwania wydarzenia
   const handleDeleteEvent = (eventId: number) => {
     setEvents(events.filter((event) => event.id !== eventId));
   };
@@ -138,6 +137,8 @@ const Schedule: React.FC = () => {
       header: 'Duration (min)'
     },
     {
+      accessorKey: 'actions',
+      header: 'Actions',
       id: 'actions',
       cell: ({ row }) => {
         const event = row.original;
@@ -217,18 +218,18 @@ const Schedule: React.FC = () => {
     date: 'Date',
     time: 'Time',
     clientName: 'Client Name',
-    duration: 'Duration (min)'
+    duration: 'Duration'
   };
 
   return (
-    <div className="absolute inset-0 px-4 pt-4 pb-12 overflow-auto bg-black">
+    <div className="absolute inset-0 px-4 pt-4 pb-12 overflow-auto">
       <div className="space-y-4">
         {/* Header Stats Card */}
         <Card className="bg-gradient-to-tr from-transparent to-gray-300/5 border border-white/10">
           <CardContent className="flex items-center justify-between p-6">
             <div className="flex items-center gap-4">
               <div className="p-3 bg-emerald-500/10 rounded-full">
-                <CalendarIcon className="h-8 w-8 text-emerald-400" />
+                <CalendarIcon className="h-8 w-8 text-emerald-800" />
               </div>
               <div>
                 <h3 className="text-2xl font-bold text-white">{events.length}</h3>
@@ -269,7 +270,7 @@ const Schedule: React.FC = () => {
               </DropdownMenu>
               <Button
                 onClick={handleAddEvent}
-                className="bg-emerald-400/40 backdrop-blur-md border border-white/10 hover:bg-emerald-400/50 text-gray-300"
+                className="bg-emerald-800/50 backdrop-blur-md border border-white/10 hover:bg-emerald-800/60 text-gray-300"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Add Event
@@ -396,7 +397,7 @@ const Schedule: React.FC = () => {
           <DialogFooter>
             <Button
               onClick={handleSaveEvent}
-              className="bg-emerald-400/40 backdrop-blur-md border border-white/10 hover:bg-emerald-400/50 text-gray-300"
+              className="bg-emerald-800/50 backdrop-blur-md border border-white/10 hover:bg-emerald-800/60 text-gray-300"
             >
               {selectedEvent ? 'Save Changes' : 'Add Event'}
             </Button>

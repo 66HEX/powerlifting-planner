@@ -28,12 +28,6 @@ import {
 import { NavUser } from '@/components/nav-user';
 
 const data = {
-  teams: [
-    {
-      name: 'Evil Corp.',
-      logo: Command
-    }
-  ],
   user: {
     name: 'shadcn',
     email: 'm@example.com',

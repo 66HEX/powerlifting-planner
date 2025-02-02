@@ -2,15 +2,19 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import {
-  Activity,
-  Users,
-  TrendingUp,
-  Calendar,
-  ArrowUp,
-  ArrowDown,
-} from 'lucide-react';
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  CartesianGrid,
+  Legend
+} from "recharts";
+import { Activity, Users, TrendingUp, Calendar, ArrowUp, ArrowDown } from 'lucide-react';
 
 // Sample data remains the same
 const clientProgress = [
@@ -46,9 +50,9 @@ const statsData = [
   { icon: Calendar, title: '12', subtitle: 'Upcoming Sessions', trend: '+3%', up: true }
 ];
 
-const Dashboard = () => {
+function Dashboard() {
   return (
-    <div className="absolute inset-0 px-4 pt-4 pb-12 overflow-auto bg-black">
+    <div className="absolute inset-0 px-4 pt-4 pb-12 overflow-auto">
       <div className="space-y-4">
         {/* Stats cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -56,7 +60,7 @@ const Dashboard = () => {
             <Card key={index} className="bg-gradient-to-tr from-transparent to-gray-300/5 border border-white/10">
               <CardContent className="flex flex-col items-center justify-center p-6">
                 <div className="p-3 bg-emerald-500/10 rounded-full">
-                  <stat.icon className="h-8 w-8 text-emerald-400" />
+                  <stat.icon className="h-8 w-8 text-emerald-800" />
                 </div>
                 <h3 className="text-2xl font-bold text-white mt-4">{stat.title}</h3>
                 <p className="text-sm font-medium text-gray-400">{stat.subtitle}</p>
@@ -76,14 +80,17 @@ const Dashboard = () => {
 
         {/* Charts */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <Card className="bg-gradient-to-tr from-transparent to-gray-300/5 border border-white/10">
-            <CardHeader className="pb-8">
-              <CardTitle className="text-lg font-medium text-gray-300 flex items-center gap-2">Client Growth</CardTitle>
-              <p className="text-sm text-gray-400">Track the growth of your client base over time.</p>
+          <Card className="relative overflow-hidden bg-gradient-to-tr from-transparent to-gray-300/5 border border-white/10">
+            <div className="z-0 -right-32 absolute w-3/4 aspect-square bg-emerald-800 blur-3xl rounded-full translate-y-1/4" />
+            <div className="z-10 absolute bottom-0 h-full blur-xl w-full  backdrop-blur-3xl bg-gradient-to-t from-transparent to-transparent/0" />
+            <CardHeader className="pb-8 z-10">
+              <CardTitle className="z-10 text-lg font-medium text-gray-300 flex items-center gap-2">Client Growth</CardTitle>
+              <p className="z-10 text-sm text-gray-400">Track the growth of your client base over time.</p>
             </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={200}>
-                <LineChart data={clientProgress}>
+            <CardContent className="z-10">
+              <ResponsiveContainer className="z-10" width="100%" height={200}>
+                <LineChart className="z-10" data={clientProgress}>
+                  <CartesianGrid strokeDasharray="3 3" opacity={0.05} />
                   <XAxis dataKey="month" stroke="#6B7280" fontSize={12} tickLine={false} />
                   <YAxis stroke="#6B7280" fontSize={12} tickLine={false} />
                   <Tooltip
@@ -93,7 +100,8 @@ const Dashboard = () => {
                       backdropFilter: 'blur(10px)',
                       border: '1px solid rgba(255,255,255,0.1)',
                       color: '#E5E7EB',
-                      borderRadius: '6px'
+                      borderRadius: '6px',
+                      fontSize: '14px'
                     }}
                   />
                   <Line
@@ -107,7 +115,7 @@ const Dashboard = () => {
                   <Line
                     type="monotone"
                     dataKey="activeClients"
-                    stroke="#059669"
+                    stroke="rgba(6, 95, 70, 1)"
                     strokeWidth={2}
                     dot={false}
                     name="Active Clients"
@@ -127,6 +135,7 @@ const Dashboard = () => {
             <CardContent>
               <ResponsiveContainer width="100%" height={200}>
                 <BarChart data={workloadData}>
+                  <CartesianGrid strokeDasharray="3 3" opacity={0.05} />
                   <XAxis dataKey="day" stroke="#6B7280" fontSize={12} tickLine={false} />
                   <YAxis stroke="#6B7280" fontSize={12} tickLine={false} />
                   <Tooltip
@@ -136,10 +145,11 @@ const Dashboard = () => {
                       backdropFilter: 'blur(10px)',
                       border: '1px solid rgba(255,255,255,0.1)',
                       color: '#E5E7EB',
-                      borderRadius: '6px'
+                      borderRadius: '6px',
+                      fontSize: '14px'
                     }}
                   />
-                  <Bar dataKey="sessions" fill="#34D399" name="Number of Sessions" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="sessions" fill="rgb(6 95 70)" name="Sessions" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
@@ -190,6 +200,6 @@ const Dashboard = () => {
       </div>
     </div>
   );
-};
+}
 
 export default Dashboard;
