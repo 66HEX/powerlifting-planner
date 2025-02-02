@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -21,70 +21,15 @@ import {
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 import PlanDialog from '@/components/plan-dialog';
+import { useToast } from '@/hooks/use-toast';
 
-// Sample data with the updated structure
-const initialPlans: Plan[] = [
-  {
-    id: 1,
-    name: 'Mass Gain Plan',
-    clientName: 'John Doe',
-    durationWeeks: 8,
-    workoutsPerWeek: 4,
-    createdAt: new Date(2024, 0, 15),
-    weeks: [
-      {
-        weekNumber: 1,
-        workouts: [
-          {
-            id: 1,
-            exercises: [
-              {
-                id: 1,
-                name: 'Bench Press',
-                sets: [
-                  { id: 1, weight: 60, reps: 8, rawInput: '8x60' },
-                  { id: 2, weight: 65, reps: 8, rawInput: '8x65' },
-                  { id: 3, weight: 70, reps: 8, rawInput: '8x70' }
-                ],
-                comment: 'Focus on proper form'
-              }
-            ]
-          }
-        ]
-      }
-    ]
-  },
-  {
-    id: 2,
-    name: 'Gain Muscle Plan',
-    clientName: 'Jane Doe',
-    durationWeeks: 12,
-    workoutsPerWeek: 3,
-    createdAt: new Date(2023, 1, 15),
-    weeks: [
-      {
-        weekNumber: 1,
-        workouts: [
-          {
-            id: 1,
-            exercises: [
-              {
-                id: 1,
-                name: 'Hip Thrust',
-                sets: [
-                  { id: 1, weight: 60, reps: 12, rawInput: '12x60' },
-                  { id: 2, weight: 65, reps: 12, rawInput: '12x65' },
-                  { id: 3, weight: 70, reps: 12, rawInput: '12x70' }
-                ],
-                comment: 'Focus on proper form'
-              }
-            ]
-          }
-        ]
-      }
-    ]
-  }
-];
+const transformPlanData = (plan: any): Plan => ({
+  ...plan,
+  clientName: plan.client_name,
+  createdAt: plan.created_at,
+  durationWeeks: plan.duration_weeks,
+  workoutsPerWeek: plan.workouts_per_week
+});
 
 const ActionsCell: React.FC<{
   plan: Plan;
@@ -104,47 +49,125 @@ const ActionsCell: React.FC<{
 };
 
 const Plans: React.FC = () => {
-  const [plans, setPlans] = useState<Plan[]>(initialPlans);
+  const [plans, setPlans] = useState<Plan[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
   const [filterClientName, setFilterClientName] = useState('');
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnVisibility, setColumnVisibility] = useState<Record<string, boolean>>({});
+  const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
+
+  const fetchPlans = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const fetchedPlans = await window.Main.db.plans.getAll();
+      const transformedPlans = fetchedPlans.map(transformPlanData);
+      setPlans(transformedPlans);
+    } catch (error) {
+      console.error('Error fetching plans:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to fetch plans. Please try again later.'
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [toast]);
+
+  useEffect(() => {
+    fetchPlans();
+  }, [fetchPlans]);
+
+  const handleEditPlan = useCallback(
+    async (plan: Plan) => {
+      try {
+        const fullPlan = await window.Main.db.plans.getById(plan.id);
+        if (fullPlan) {
+          const transformedPlan = transformPlanData(fullPlan);
+          setSelectedPlan(transformedPlan);
+          setIsDialogOpen(true);
+        }
+      } catch (error) {
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: 'Failed to load plan details. Please try again.'
+        });
+      }
+    },
+    [toast]
+  );
+
+  const handleDeletePlan = useCallback(
+    async (planId: number) => {
+      try {
+        await window.Main.db.plans.delete(planId);
+        await fetchPlans(); // Refresh the plans list after deletion
+
+        toast({
+          title: 'Success',
+          description: 'Plan deleted successfully'
+        });
+      } catch (error) {
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: 'Failed to delete plan. Please try again.'
+        });
+      }
+    },
+    [fetchPlans, toast]
+  );
+
+  const handleSavePlan = useCallback(
+    async (plan: Omit<Plan, 'id' | 'createdAt' | 'weeks'>) => {
+      try {
+        if (selectedPlan) {
+          // Update existing plan
+          await window.Main.db.plans.update({
+            ...selectedPlan,
+            ...plan,
+            client_name: plan.clientName,
+            duration_weeks: plan.durationWeeks,
+            workouts_per_week: plan.workoutsPerWeek
+          });
+          const { id } = selectedPlan;
+          await fetchPlans(); // Refresh the plans list after update
+          return id;
+        }
+
+        // Create new plan
+        const newPlanId = await window.Main.db.plans.create({
+          ...plan,
+          client_name: plan.clientName,
+          duration_weeks: plan.durationWeeks,
+          workouts_per_week: plan.workoutsPerWeek
+        });
+
+        await fetchPlans(); // Refresh the plans list after creation
+        return newPlanId;
+      } catch (error) {
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: 'Failed to save plan. Please try again.'
+        });
+        throw error;
+      }
+    },
+    [selectedPlan, fetchPlans, toast]
+  );
 
   const filteredPlans = useMemo(() => {
-    return plans.filter((plan) => plan.clientName.toLowerCase().includes(filterClientName.toLowerCase()));
+    return plans.filter((plan) => plan?.clientName?.toLowerCase().includes(filterClientName.toLowerCase()) ?? false);
   }, [plans, filterClientName]);
 
   const handleAddPlan = useCallback(() => {
     setSelectedPlan(null);
     setIsDialogOpen(true);
   }, []);
-
-  const handleEditPlan = useCallback((plan: Plan) => {
-    setSelectedPlan(plan);
-    setIsDialogOpen(true);
-  }, []);
-
-  const handleDeletePlan = useCallback((planId: number) => {
-    setPlans((prev) => prev.filter((plan) => plan.id !== planId));
-  }, []);
-
-  const handleSavePlan = useCallback(
-    (plan: Plan) => {
-      if (selectedPlan) {
-        setPlans((prev) => prev.map((p) => (p.id === selectedPlan.id ? plan : p)));
-      } else {
-        const newPlan: Plan = {
-          ...plan,
-          id: Math.max(...plans.map((p) => p.id), 0) + 1,
-          createdAt: new Date()
-        };
-        setPlans((prev) => [...prev, newPlan]);
-      }
-      setIsDialogOpen(false);
-    },
-    [selectedPlan, plans]
-  );
 
   const columnDisplayNames: Record<string, string> = {
     clientName: 'Client Name',
@@ -154,7 +177,6 @@ const Plans: React.FC = () => {
     createdAt: 'Created At'
   };
 
-  // Updated columns definition using useMemo
   const columns = useMemo<ColumnDef<Plan>[]>(
     () => [
       { accessorKey: 'clientName', header: 'Client Name' },
@@ -192,7 +214,6 @@ const Plans: React.FC = () => {
   return (
     <div className="absolute inset-0 px-4 pt-4 pb-12 overflow-auto">
       <div className="space-y-4">
-        {/* Header Stats Card */}
         <Card className="bg-gradient-to-tr from-transparent to-gray-300/5 border border-white/10">
           <CardContent className="flex items-center justify-between p-6">
             <div className="flex items-center gap-4">
@@ -247,7 +268,6 @@ const Plans: React.FC = () => {
           </CardContent>
         </Card>
 
-        {/* Plans Table Card */}
         <Card className="bg-gradient-to-tr from-transparent to-gray-300/5 border border-white/10">
           <CardHeader className="pb-8">
             <CardTitle className="text-lg font-medium text-gray-300">Training Plans</CardTitle>
@@ -267,7 +287,13 @@ const Plans: React.FC = () => {
                 ))}
               </TableHeader>
               <TableBody>
-                {table.getRowModel().rows?.length ? (
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={columns.length} className="h-24 text-center text-gray-400">
+                      Loading plans...
+                    </TableCell>
+                  </TableRow>
+                ) : table.getRowModel().rows?.length ? (
                   table.getRowModel().rows.map((row) => (
                     <TableRow key={row.id} className="border-b border-white/5 hover:bg-gray-300/5">
                       {row.getVisibleCells().map((cell) => (

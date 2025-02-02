@@ -8,19 +8,23 @@ import ExerciseTable from '@/components/exercise-table';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { type Plan, type Week } from '@/types/plan-types';
+import { useToast } from '@/hooks/use-toast';
 
 const PlanDialog: React.FC<{
   isOpen: boolean;
   onClose: () => void;
-  onSave: (plan: Plan) => void;
+  onSave: (plan: Omit<Plan, 'id' | 'createdAt' | 'weeks'>) => Promise<number>;
   selectedPlan: Plan | null;
-}> = ({ isOpen, onClose, onSave, selectedPlan }) => {
+  onPlanSaved?: () => void;
+}> = ({ isOpen, onClose, onSave, selectedPlan, onPlanSaved }) => {
+  const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState(1);
   const [name, setName] = useState(selectedPlan?.name || '');
   const [clientName, setClientName] = useState(selectedPlan?.clientName || '');
   const [durationWeeks, setDurationWeeks] = useState(String(selectedPlan?.durationWeeks || ''));
   const [workoutsPerWeek, setWorkoutsPerWeek] = useState(String(selectedPlan?.workoutsPerWeek || ''));
   const [weeks, setWeeks] = useState<Week[]>(selectedPlan?.weeks || []);
+  const [isSaving, setIsSaving] = useState(false);
 
   const totalSteps = 1 + (Number(durationWeeks) || 0) * (Number(workoutsPerWeek) || 0) + 1;
   const progressValue = (currentStep / totalSteps) * 100;
@@ -92,19 +96,87 @@ const PlanDialog: React.FC<{
 
       setWeeks(newWeeks);
     }
-  }, [durationWeeks, workoutsPerWeek, isOpen]);
+  }, [durationWeeks, workoutsPerWeek, isOpen, selectedPlan]);
 
-  const handleSave = () => {
-    onSave({
-      id: selectedPlan?.id || 0,
-      name,
-      clientName,
-      durationWeeks: Number(durationWeeks),
-      workoutsPerWeek: Number(workoutsPerWeek),
-      weeks,
-      createdAt: selectedPlan?.createdAt || new Date()
-    });
-    onClose();
+  // Reset form when dialog opens
+  useEffect(() => {
+    if (isOpen) {
+      if (selectedPlan) {
+        setName(selectedPlan.name);
+        setClientName(selectedPlan.clientName);
+        setDurationWeeks(String(selectedPlan.durationWeeks));
+        setWorkoutsPerWeek(String(selectedPlan.workoutsPerWeek));
+        setWeeks(selectedPlan.weeks);
+      } else {
+        setName('');
+        setClientName('');
+        setDurationWeeks('');
+        setWorkoutsPerWeek('');
+        setWeeks([]);
+      }
+      setCurrentStep(1);
+    }
+  }, [isOpen, selectedPlan]);
+
+  const handleSave = async () => {
+    try {
+      setIsSaving(true);
+
+      const planData = {
+        name,
+        clientName,
+        durationWeeks: Number(durationWeeks),
+        workoutsPerWeek: Number(workoutsPerWeek)
+      };
+
+      const planId = await onSave(planData);
+
+      if (!selectedPlan && planId) {
+        for (let i = 0; i < weeks.length; i++) {
+          const weekId = await window.Main.db.weeks.create(planId, i + 1);
+
+          for (const workout of weeks[i].workouts) {
+            const workoutId = await window.Main.db.workouts.create(weekId);
+
+            for (const exercise of workout.exercises) {
+              const exerciseId = await window.Main.db.exercises.create(workoutId, {
+                name: exercise.name,
+                comment: exercise.comment
+              });
+
+              for (const set of exercise.sets) {
+                await window.Main.db.sets.create(exerciseId, {
+                  weight: set.weight,
+                  reps: set.reps,
+                  rawInput: set.rawInput
+                });
+              }
+            }
+          }
+        }
+      }
+
+      toast({
+        title: 'Success',
+        description: selectedPlan ? 'Plan updated successfully' : 'Plan created successfully'
+      });
+
+      // Wywołanie callbacka po pomyślnym zapisaniu
+      if (onPlanSaved) {
+        onPlanSaved();
+      }
+
+      onClose();
+    } catch (error) {
+      console.error('Error saving plan:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to save plan. Please try again.'
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const maxSets = Math.max(
@@ -112,39 +184,6 @@ const PlanDialog: React.FC<{
       week.workouts.flatMap((workout) => workout.exercises.map((exercise) => exercise.sets.length))
     )
   );
-
-  const addExercise = () => {
-    if (!currentWorkout) return;
-
-    const newExercise = {
-      id: Date.now(),
-      name: '',
-      sets: [
-        {
-          id: Date.now(),
-          weight: 0,
-          reps: 0
-        }
-      ],
-      comment: ''
-    };
-
-    const updatedWeeks = weeks.map((week, wIndex) => {
-      if (wIndex !== currentWorkout.weekIndex) return week;
-      return {
-        ...week,
-        workouts: week.workouts.map((workout, woIndex) => {
-          if (woIndex !== currentWorkout.workoutIndex) return workout;
-          return {
-            ...workout,
-            exercises: [...workout.exercises, newExercise]
-          };
-        })
-      };
-    });
-
-    setWeeks(updatedWeeks);
-  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -200,6 +239,7 @@ const PlanDialog: React.FC<{
             </h3>
             <ExerciseTable
               exercises={currentWorkout.workout.exercises}
+              workoutId={currentWorkout.workout.id}
               onUpdate={(updatedExercises) => {
                 const updatedWeeks = weeks.map((week, wIndex) => {
                   if (wIndex !== currentWorkout.weekIndex) return week;
@@ -259,7 +299,7 @@ const PlanDialog: React.FC<{
                                     const set = exercise.sets[setIdx];
                                     return (
                                       <TableCell
-                                        key={`exercise-${exercise.id}-set-${exercise.sets[setIdx].id}`}
+                                        key={`exercise-${exercise.id}-set-${setIdx}`}
                                         className="text-gray-400"
                                       >
                                         {set ? `${set.reps}x${set.weight}kg` : '-'}
@@ -299,6 +339,7 @@ const PlanDialog: React.FC<{
               <Button
                 onClick={() => setCurrentStep((prev) => prev - 1)}
                 className="bg-transparent border border-white/10 text-gray-300 hover:bg-gray-300/5 mr-auto"
+                disabled={isSaving}
               >
                 Previous
               </Button>
@@ -308,7 +349,9 @@ const PlanDialog: React.FC<{
               <Button
                 onClick={() => setCurrentStep((prev) => prev + 1)}
                 className="bg-emerald-800/50 backdrop-blur-md border border-white/10 hover:bg-emerald-800/60 text-gray-300"
-                disabled={currentStep === 1 && (!name || !clientName || !durationWeeks || !workoutsPerWeek)}
+                disabled={
+                  (currentStep === 1 && (!name || !clientName || !durationWeeks || !workoutsPerWeek)) || isSaving
+                }
               >
                 {currentStep === 1 ? 'Start Configuration' : 'Next'}
               </Button>
@@ -316,8 +359,9 @@ const PlanDialog: React.FC<{
               <Button
                 onClick={handleSave}
                 className="bg-emerald-800/50 backdrop-blur-md border border-white/10 hover:bg-emerald-800/60 text-gray-300"
+                disabled={isSaving}
               >
-                Save Plan
+                {isSaving ? 'Saving...' : 'Save Plan'}
               </Button>
             )}
           </div>

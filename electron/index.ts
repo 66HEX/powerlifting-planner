@@ -1,15 +1,16 @@
 // Native
 import { join } from 'path';
+import { Plan, Week, Workout, Exercise, Set, database } from './database';
 
 // Packages
-import { BrowserWindow, app, ipcMain, IpcMainEvent, nativeTheme, screen } from 'electron';
+import { BrowserWindow, app, ipcMain, IpcMainEvent, nativeTheme, screen, IpcMainInvokeEvent } from 'electron';
 import isDev from 'electron-is-dev';
 
 function createWindow() {
   // Get the primary display's dimensions
   const primaryDisplay = screen.getPrimaryDisplay();
   const { height } = primaryDisplay.workAreaSize;
-  const width = 1200;
+  const { width } = primaryDisplay.workAreaSize;
   // Create the browser window.
   const window = new BrowserWindow({
     width,
@@ -34,7 +35,7 @@ function createWindow() {
     window?.loadFile(url);
   }
   // Open the DevTools.
-  // window.webContents.openDevTools();
+  window.webContents.openDevTools();
 
   // For AppBar
   ipcMain.on('minimize', () => {
@@ -58,6 +59,7 @@ function createWindow() {
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.whenReady().then(() => {
+  database.initDB();
   createWindow();
 
   app.on('activate', () => {
@@ -81,4 +83,124 @@ app.on('window-all-closed', () => {
 ipcMain.on('message', (event: IpcMainEvent, message: any) => {
   console.log(message);
   setTimeout(() => event.sender.send('message', 'common.hiElectron'), 500);
+});
+
+// Handlery dla planów treningowych
+ipcMain.handle(
+  'db:plans:create',
+  async (_event: IpcMainInvokeEvent, plan: Omit<Plan, 'id' | 'createdAt' | 'weeks'>) => {
+    return await database.plans.create(plan);
+  }
+);
+
+ipcMain.handle('db:plans:getAll', async (_event: IpcMainInvokeEvent) => {
+  return await database.plans.getAll();
+});
+
+ipcMain.handle('db:plans:getById', async (_event: IpcMainInvokeEvent, id: number) => {
+  return await database.plans.getById(id);
+});
+
+ipcMain.handle('db:plans:update', async (_event: IpcMainInvokeEvent, plan: Plan) => {
+  return await database.plans.update(plan);
+});
+
+ipcMain.handle('db:plans:delete', async (_event: IpcMainInvokeEvent, id: number) => {
+  return await database.plans.delete(id);
+});
+
+// Handlery dla tygodni
+ipcMain.handle(
+  'db:weeks:create',
+  async (_event: IpcMainInvokeEvent, { planId, weekNumber }: { planId: number; weekNumber: number }) => {
+    return await database.weeks.create(planId, weekNumber);
+  }
+);
+
+ipcMain.handle('db:weeks:getById', async (_event: IpcMainInvokeEvent, id: number) => {
+  return await database.weeks.getById(id);
+});
+
+ipcMain.handle('db:weeks:getByPlanId', async (_event: IpcMainInvokeEvent, planId: number) => {
+  return await database.weeks.getByPlanId(planId);
+});
+
+ipcMain.handle('db:weeks:update', async (_event: IpcMainInvokeEvent, week: Week) => {
+  return await database.weeks.update(week);
+});
+
+ipcMain.handle('db:weeks:delete', async (_event: IpcMainInvokeEvent, id: number) => {
+  return await database.weeks.delete(id);
+});
+
+// Handlery dla treningów
+ipcMain.handle('db:workouts:create', async (_event: IpcMainInvokeEvent, weekId: number) => {
+  return await database.workouts.create(weekId);
+});
+
+ipcMain.handle('db:workouts:getById', async (_event: IpcMainInvokeEvent, id: number) => {
+  return await database.workouts.getById(id);
+});
+
+ipcMain.handle('db:workouts:getByWeekId', async (_event: IpcMainInvokeEvent, weekId: number) => {
+  return await database.workouts.getByWeekId(weekId);
+});
+
+ipcMain.handle('db:workouts:update', async (_event: IpcMainInvokeEvent, workout: Workout) => {
+  return await database.workouts.update(workout);
+});
+
+ipcMain.handle('db:workouts:delete', async (_event: IpcMainInvokeEvent, id: number) => {
+  return await database.workouts.delete(id);
+});
+
+// Handlery dla ćwiczeń
+ipcMain.handle(
+  'db:exercises:create',
+  async (
+    _event: IpcMainInvokeEvent,
+    { workoutId, exercise }: { workoutId: number; exercise: Omit<Exercise, 'id' | 'sets'> }
+  ) => {
+    return await database.exercises.create(workoutId, exercise);
+  }
+);
+
+ipcMain.handle('db:exercises:getById', async (_event: IpcMainInvokeEvent, id: number) => {
+  return await database.exercises.getById(id);
+});
+
+ipcMain.handle('db:exercises:getByWorkoutId', async (_event: IpcMainInvokeEvent, workoutId: number) => {
+  return await database.exercises.getByWorkoutId(workoutId);
+});
+
+ipcMain.handle('db:exercises:update', async (_event: IpcMainInvokeEvent, exercise: Exercise) => {
+  return await database.exercises.update(exercise);
+});
+
+ipcMain.handle('db:exercises:delete', async (_event: IpcMainInvokeEvent, id: number) => {
+  return await database.exercises.delete(id);
+});
+
+// Handlery dla serii
+ipcMain.handle(
+  'db:sets:create',
+  async (_event: IpcMainInvokeEvent, { exerciseId, set }: { exerciseId: number; set: Omit<Set, 'id'> }) => {
+    return await database.sets.create(exerciseId, set);
+  }
+);
+
+ipcMain.handle('db:sets:getById', async (_event: IpcMainInvokeEvent, id: number) => {
+  return await database.sets.getById(id);
+});
+
+ipcMain.handle('db:sets:getByExerciseId', async (_event: IpcMainInvokeEvent, exerciseId: number) => {
+  return await database.sets.getByExerciseId(exerciseId);
+});
+
+ipcMain.handle('db:sets:update', async (_event: IpcMainInvokeEvent, set: Set) => {
+  return await database.sets.update(set);
+});
+
+ipcMain.handle('db:sets:delete', async (_event: IpcMainInvokeEvent, id: number) => {
+  return await database.sets.delete(id);
 });
